@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#F6F3F0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#16120F" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Two Plates</title>
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>html,body{margin:0;height:100%;overflow:hidden}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap">
 <style>
@@ -36,7 +36,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .app{max-width:430px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative}
-.screen{flex:1;overflow-y:auto;padding:20px 18px 24px;display:flex;flex-direction:column;gap:16px}
+.stage{flex:1;min-height:0;position:relative;display:flex}
+.screen{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 18px 24px;display:flex;flex-direction:column;gap:16px}
+.screen>*{flex-shrink:0}
+.empty{flex-shrink:1!important}
 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 h1{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -87,9 +90,9 @@ h1{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;ma
 .dish{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;padding:4px 0;border-radius:14px}
 .dish .plate{width:100%;max-width:96px;aspect-ratio:1;height:auto}
 .dish .n{font-size:13px;font-weight:600;line-height:1.2;min-height:2.4em;display:flex;align-items:center}
-.fab{position:absolute;right:18px;bottom:84px;width:56px;height:56px;border-radius:50%;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(160,70,20,.3)}
+.fab{position:absolute;right:18px;bottom:18px;z-index:3;width:56px;height:56px;border-radius:50%;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(160,70,20,.3)}
 /* add dish */
-.photo-in{align-self:center;width:170px;height:170px;border-radius:50%;border:2px dashed var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;overflow:hidden;background:var(--surface);position:relative}
+.photo-in{align-self:center;width:170px;height:170px;flex-shrink:0;aspect-ratio:1;border-radius:50%;border:2px dashed var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;overflow:hidden;background:var(--surface);position:relative}
 .photo-in img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .photo-in input{position:absolute;opacity:0;width:1px;height:1px}
 .field{display:flex;flex-direction:column;gap:8px}
@@ -158,10 +161,11 @@ h1{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;ma
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 </style>
 
+<style>.app{height:100vh;height:100dvh}@media (min-width:600px){.app{height:min(880px,calc(100dvh - 48px))}}</style>
 </head>
 <body>
 <div class="app" id="app">
-  <main class="screen" id="screen"></main>
+  <div class="stage" id="stage"><main class="screen" id="screen"></main></div>
   <div id="footer"></div>
   <nav class="tabs" role="tablist">
     <button role="tab" id="tab-week" aria-selected="true" data-tab="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>This week</button>
@@ -332,12 +336,12 @@ function renderDishes(){
   if(S.view==='add') return renderAdd();
   sc.innerHTML=`<div class="top"><div><div class="eyebrow">${S.dishes.length} dishes we cook</div><h1>Our dishes</h1></div></div>
     <p class="sub" style="margin:-6px 0 0">Tap a dish to edit its effort.</p><div class="grid">${S.dishes.map(d=>`<button class="dish" data-id="${d.id}" aria-label="Edit ${esc(d.name)}"><img class="plate" src="${d.img}" alt=""><span class="n">${esc(d.name)}</span>${chip(d)}</button>`).join('')}</div>
-    <div style="height:56px"></div>`;
+    <div style="height:64px"></div>`;
   const fab=document.createElement('button'); fab.className='fab'; fab.id='fab'; fab.setAttribute('aria-label','Add a dish');
   fab.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
   fab.onclick=()=>{S.view='add';render()};
   $$('.dish').forEach(b=>b.onclick=()=>openEdit(b.dataset.id));
-  sc.appendChild(fab);
+  $('#stage').appendChild(fab);
 }
 
 
@@ -402,6 +406,7 @@ function renderAdd(){
 function toast(msg){$$('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;$('#app').appendChild(t);setTimeout(()=>t.remove(),2200)}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function render(){
+  $('#fab')&&$('#fab').remove();
   $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
   $('#screen').scrollTop=0;
   S.tab==='week'?renderWeek():renderDishes();
